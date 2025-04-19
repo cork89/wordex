@@ -1,0 +1,161 @@
+package main
+
+import (
+	"fmt"
+	"strconv"
+)
+
+templ Index(words Words) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>Wordex | { words.getWordsString() }</title>
+			<link rel="icon" type="image/x-icon" href="/static/wordex.ico"/>
+			<style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+      min-height: 100vh;
+      padding-bottom: 140px; /* space for history */
+    }
+
+    .centered-text {
+      font-size: 5rem;
+      font-weight: bold;
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .word-container {
+      position: relative;
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      border: 3px solid #333;
+      border-radius: 10px;
+      color: #333;
+      user-select: none;
+      transition: transform 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .rewind-button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      background: transparent;
+    }
+
+    button {
+      font-size: 1.5rem;
+      padding: 10px 20px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      transition: background-color 0.3s ease;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+		</head>
+		<body>
+			<div class="centered-text" id="words">
+				@WordsDiv(words)
+			</div>
+			<button id="changeBtn">Change Words</button>
+			<div id="history">
+				<div id="historyList"></div>
+			</div>
+		</body>
+		<script>
+    function setQueryStringParameter(name, value) {
+        const params = new URLSearchParams(window.location.search);
+        params.set(name, value);
+        window.history.pushState({}, "", decodeURIComponent(`${window.location.pathname}?${params}`));
+    }
+
+    function handleWordsChange(newWordsHtml, words, ok) {
+      if (ok) {
+        document.getElementById('words').innerHTML = newWordsHtml;
+        if (words) {
+            setQueryStringParameter("words", words)
+            document.title = `Wordex | ${words}`
+        }
+
+      } else {
+        document.getElementById('words').textContent = 'Error loading words';
+        console.error('Fetch error:', error);
+
+      }
+    }
+
+    async function fetchWords() {
+        const response = await fetch('/words/');
+        const data = await response.text();
+        const words = response.headers.get("words")
+        handleWordsChange(data, words, response.ok)
+    }
+
+    async function handleWordChange(word, index) {
+      try {
+        const params = new URLSearchParams(window.location.search)
+        const wordParams = params.get("words")
+        
+        const response = await fetch(`/word/${index}/${wordParams ? "?words="+wordParams:""}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.text();
+
+        document.getElementById(`word-${index}`).outerHTML = data;
+        const words = response.headers.get("words")
+        if (words) {
+           setQueryStringParameter("words", words)
+        }
+      } catch (error) {
+        document.getElementById(`word-${index}`).textContent = 'Error loading word';
+        console.error('Fetch error:', error);
+      }
+    }
+
+    document.getElementById('changeBtn').addEventListener('click', fetchWords);
+
+    window.addEventListener("popstate", (event) => {
+      window.location.href = window.location.href
+    })
+  </script>
+	</html>
+}
+
+templ WordsDiv(words Words) {
+	for index, word := range words.Words {
+		@WordDiv(word, strconv.Itoa(index))
+	}
+}
+
+templ WordDiv(word Word, index string) {
+	<div id={ fmt.Sprintf("word-%s", index) } class="word-container" style={ fmt.Sprintf("background-color: %s; border-color: black;", word.Color) }>
+		<span>{ word.Word }</span>
+		<button class="rewind-button" onclick={ templ.JSFuncCall("handleWordChange", word.Word, index) } aria-label="Change word">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" width="24px" height="24px">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"></path>
+			</svg>
+		</button>
+	</div>
+}
