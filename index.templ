@@ -25,7 +25,7 @@ templ Index(words Words) {
       align-items: center;
       background-color: #f0f0f0;
       min-height: 100vh;
-      padding-bottom: 140px; /* space for history */
+      padding-bottom: 140px;
     }
 
     .centered-text {
@@ -51,12 +51,16 @@ templ Index(words Words) {
 
     .rewind-button {
       position: absolute;
-      top: 5px;
+      top: -5px;
       right: 5px;
       border: none;
       cursor: pointer;
       padding: 0;
       background: transparent;
+    }
+
+    .rewind-button:hover {
+      background-color: #a1a1a1;
     }
 
     button {
@@ -153,7 +157,7 @@ templ WordDiv(word Word, index string) {
 	<div id={ fmt.Sprintf("word-%s", index) } class="word-container" style={ fmt.Sprintf("background-color: %s; border-color: black;", word.Color) }>
 		<span>{ word.Word }</span>
 		<button class="rewind-button" onclick={ templ.JSFuncCall("handleWordChange", word.Word, index) } aria-label="Change word">
-			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="black" width="24px" height="24px">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="#333" width="24px" height="24px">
 				<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"></path>
 			</svg>
 		</button>

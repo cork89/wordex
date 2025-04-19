@@ -47,7 +47,7 @@ func Index(words Words) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/x-icon\" href=\"/static/wordex.ico\"><style>\r\n    html,\r\n    body {\r\n      height: 100%;\r\n      margin: 0;\r\n      font-family: Arial, sans-serif;\r\n      display: flex;\r\n      flex-direction: column;\r\n      justify-content: center;\r\n      align-items: center;\r\n      background-color: #f0f0f0;\r\n      min-height: 100vh;\r\n      padding-bottom: 140px; /* space for history */\r\n    }\r\n\r\n    .centered-text {\r\n      font-size: 5rem;\r\n      font-weight: bold;\r\n      text-align: center;\r\n      color: #333;\r\n      margin-bottom: 20px;\r\n    }\r\n\r\n    .word-container {\r\n      position: relative;\r\n      display: inline-block;\r\n      margin: 10px;\r\n      padding: 10px 20px;\r\n      border: 3px solid #333;\r\n      border-radius: 10px;\r\n      color: #333;\r\n      user-select: none;\r\n      transition: transform 0.2s ease;\r\n      white-space: nowrap;\r\n    }\r\n\r\n    .rewind-button {\r\n      position: absolute;\r\n      top: 5px;\r\n      right: 5px;\r\n      border: none;\r\n      cursor: pointer;\r\n      padding: 0;\r\n      background: transparent;\r\n    }\r\n\r\n    button {\r\n      font-size: 1.5rem;\r\n      padding: 10px 20px;\r\n      cursor: pointer;\r\n      border: none;\r\n      border-radius: 5px;\r\n      background-color: #007bff;\r\n      color: white;\r\n      transition: background-color 0.3s ease;\r\n      margin-top: 10px;\r\n    }\r\n\r\n    button:hover {\r\n      background-color: #0056b3;\r\n    }\r\n  </style></head><body><div class=\"centered-text\" id=\"words\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/x-icon\" href=\"/static/wordex.ico\"><style>\r\n    html,\r\n    body {\r\n      height: 100%;\r\n      margin: 0;\r\n      font-family: Arial, sans-serif;\r\n      display: flex;\r\n      flex-direction: column;\r\n      justify-content: center;\r\n      align-items: center;\r\n      background-color: #f0f0f0;\r\n      min-height: 100vh;\r\n      padding-bottom: 140px;\r\n    }\r\n\r\n    .centered-text {\r\n      font-size: 5rem;\r\n      font-weight: bold;\r\n      text-align: center;\r\n      color: #333;\r\n      margin-bottom: 20px;\r\n    }\r\n\r\n    .word-container {\r\n      position: relative;\r\n      display: inline-block;\r\n      margin: 10px;\r\n      padding: 10px 20px;\r\n      border: 3px solid #333;\r\n      border-radius: 10px;\r\n      color: #333;\r\n      user-select: none;\r\n      transition: transform 0.2s ease;\r\n      white-space: nowrap;\r\n    }\r\n\r\n    .rewind-button {\r\n      position: absolute;\r\n      top: -5px;\r\n      right: 5px;\r\n      border: none;\r\n      cursor: pointer;\r\n      padding: 0;\r\n      background: transparent;\r\n    }\r\n\r\n    .rewind-button:hover {\r\n      background-color: #a1a1a1;\r\n    }\r\n\r\n    button {\r\n      font-size: 1.5rem;\r\n      padding: 10px 20px;\r\n      cursor: pointer;\r\n      border: none;\r\n      border-radius: 5px;\r\n      background-color: #007bff;\r\n      color: white;\r\n      transition: background-color 0.3s ease;\r\n      margin-top: 10px;\r\n    }\r\n\r\n    button:hover {\r\n      background-color: #0056b3;\r\n    }\r\n  </style></head><body><div class=\"centered-text\" id=\"words\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -122,7 +122,7 @@ func WordDiv(word Word, index string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("word-%s", index))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 153, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 157, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -135,7 +135,7 @@ func WordDiv(word Word, index string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("background-color: %s; border-color: black;", word.Color))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 153, Col: 143}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 157, Col: 143}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -148,7 +148,7 @@ func WordDiv(word Word, index string) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(word.Word)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 154, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 158, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -171,7 +171,7 @@ func WordDiv(word Word, index string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" aria-label=\"Change word\"><svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"black\" width=\"24px\" height=\"24px\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99\"></path></svg></button></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" aria-label=\"Change word\"><svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"3\" stroke=\"#333\" width=\"24px\" height=\"24px\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99\"></path></svg></button></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
