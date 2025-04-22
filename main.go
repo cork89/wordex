@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -184,7 +183,6 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	savedWords := r.URL.Query().Get("words")
-	fmt.Println("savedWords", savedWords)
 	savedWordsSplit := strings.Split(savedWords, ",")
 	idx, err := strconv.Atoi(wordIdx)
 	if err != nil {
@@ -195,7 +193,11 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	words := getRandomWords(1)
+	if savedWordsSplit[0] == "" {
+		savedWordsSplit = []string{"", "", ""}
+	}
 	savedWordsSplit[idx] = words.Words[0].Word
+
 	w.Header().Set("words", strings.Join(savedWordsSplit, ","))
 
 	component := WordDiv(words.Words[0], wordIdx)
