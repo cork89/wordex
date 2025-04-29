@@ -63,6 +63,13 @@ templ Index(words Words) {
       background-color: #a1a1a1;
     }
 
+    .options {
+      position: fixed;
+      bottom: 10rem;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
     button {
       font-size: 1.5rem;
       padding: 10px 20px;
@@ -73,10 +80,35 @@ templ Index(words Words) {
       color: white;
       transition: background-color 0.3s ease;
       margin-top: 10px;
+      margin-right: 20px;
     }
 
     button:hover {
       background-color: #0056b3;
+    }
+
+    .styled-select {
+      padding: 8px 24px;
+      font-size: 1.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: white;
+      color: #333;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D'10'%20height%3D'7'%20viewBox%3D'0%200%2010%207'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Cpath%20d%3D'M0%200l5%207%205-7z'%20fill%3D'%23666'%20/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 10px 7px;
+      cursor: pointer;
+      padding-left: 12px;
+    }
+
+    .styled-select:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 3px #007bff;
     }
   </style>
 		</head>
@@ -84,7 +116,14 @@ templ Index(words Words) {
 			<div class="centered-text" id="words">
 				@WordsDiv(words)
 			</div>
-			<button id="changeBtn">Change Words</button>
+			<div class="options">
+				<button id="changeBtn">Change Words</button>
+				<select id="wordsType" class="styled-select">
+					<option value="fantasy">Fantasy</option>
+					<option value="scifi">Scifi</option>
+					<option value="mystery">Mystery</option>
+				</select>
+			</div>
 			<div id="history">
 				<div id="historyList"></div>
 			</div>
@@ -94,6 +133,10 @@ templ Index(words Words) {
         const params = new URLSearchParams(window.location.search);
         params.set(name, value);
         window.history.pushState({}, "", decodeURIComponent(`${window.location.pathname}?${params}`));
+    }
+
+    function setWordsType(event) {
+      setQueryStringParameter("type", event.target.options[event.target.selectedIndex].value)
     }
 
     function handleWordsChange(newWordsHtml, words, ok) {
@@ -112,7 +155,10 @@ templ Index(words Words) {
     }
 
     async function fetchWords() {
-        const response = await fetch('/words/');
+        const params = new URLSearchParams(window.location.search)
+        const typeParam = params.get("type")
+
+        const response = await fetch(`/words/${params.size > 0 ? "?"+params.toString() : ""}`);
         const data = await response.text();
         const words = response.headers.get("words")
         handleWordsChange(data, words, response.ok)
@@ -121,9 +167,7 @@ templ Index(words Words) {
     async function handleWordChange(word, index) {
       try {
         const params = new URLSearchParams(window.location.search)
-        const wordParams = params.get("words")
-        
-        const response = await fetch(`/word/${index}/${wordParams ? "?words="+wordParams:""}`);
+        const response = await fetch(`/word/${index}/${params.size > 0 ? "?"+params.toString() : ""}`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.text();
 
@@ -138,7 +182,9 @@ templ Index(words Words) {
       }
     }
 
+    document.getElementById("wordsType").addEventListener("change", setWordsType)
     document.getElementById('changeBtn').addEventListener('click', fetchWords);
+
 
     window.addEventListener("popstate", (event) => {
       window.location.href = window.location.href
@@ -157,9 +203,7 @@ templ WordDiv(word Word, index string) {
 	<div id={ fmt.Sprintf("word-%s", index) } class="word-container" style={ fmt.Sprintf("background-color: %s; border-color: black;", word.Color) }>
 		<span>{ word.Word }</span>
 		<button class="rewind-button" onclick={ templ.JSFuncCall("handleWordChange", word.Word, index) } aria-label="Change word">
-			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="#333" width="24px" height="24px">
-				<path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"></path>
-			</svg>
+			<img src="/static/rewind.svg"/>
 		</button>
 	</div>
 }
