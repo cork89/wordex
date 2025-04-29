@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"errors"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -11,57 +13,31 @@ import (
 	"strings"
 )
 
-var fantasywords = []string{
-	"alchemy", "astral", "arcane", "assassin", "archer", "armiger", "armorer", "archbishop", "amulet", "arrow", "axe", "abyss", "avian",
-	"aegis", "altar", "aureate", "avatar", "artificer", "arboreal", "alchemist", "ancestral", "apparition", "arcanum", "aeon", "aegisguard",
-	"archmage", "augury", "augology", "ardent", "aurelia", "aspectral", "aspectual", "acolyte", "bloodmage", "battlemage", "bloodmoon", "blackmage",
-	"bestowment", "bestow", "biomagic", "bishop", "barbarian", "bewitch", "blacksmith", "bog", "band", "bard", "book", "bracer", "boots", "buckler",
-	"baneblade", "balefire", "bolt", "bane", "brewmaster", "bifrost", "brigand", "bladebound", "barrow", "belltower", "boltflare", "banechant", "blight",
-	"briarheart", "baelstrum", "brimstone", "brazen", "barren", "barrenhold", "blessing", "bazaar", "bladecraft", "bladesmith", "berserker", "brightsteel",
-	"chronomancer", "chronosmith", "conduit", "conjuration", "conjure", "corrupt", "chalice", "chieftan", "chief", "champion", "chestplate", "cauldron",
-	"charm", "chariot", "castle", "cove", "cave", "crown", "crest", "captain", "cloak", "corona", "cryomancer", "cyromancy", "cyrology", "cyrologist",
-	"courier", "crypt", "coven", "crag", "cimmerian", "caelum", "catacomb", "chaos", "cairn", "cinderborn", "charmcaster", "cryptic", "caeli", "crimson",
-	"crimsonmage", "crownsguard", "druid", "deacon", "darkling", "duke", "dame", "domain", "dungeon", "dungeonmaster", "dagger", "demonslayer", "demonic",
-	"disenchant", "dispel", "dawnbreaker", "duskblade", "dreamweaver", "darkmoon", "dirge", "dervan", "divine", "divinity", "destrier", "dreamscape",
-	"dreadnought", "diadem", "daemonium", "dragonheart", "swimmer", "eldritch", "elixir", "enchant", "ether", "etheric", "emperor", "empire", "entity",
-	"enchantment", "enchanting", "earthmage", "eon", "elder", "echomancer", "echomancy", "ember", "embermage", "embermancy", "embermancer", "enigmancer",
-	"enigmancy", "eclipsar", "enclave", "empyrean", "equinox", "ethermancy", "ethermancer", "emberforge", "embersmith", "eldertree", "everflame", "euphoria",
-	"folklore", "feast", "forest", "fable", "fairytale", "farsight", "fateweaver", "firemage", "flamecaller", "firemancer", "frostmage", "frostmancer",
-	"frostmancy", "firemancy", "frostcaller", "feywild", "fellblade", "fellshadow", "flameforged", "forge", "floralis", "frostshaper", "firebrand", "fulgurite",
-	"forsaken", "forsworn", "gauntlets", "goblet", "gorge", "greaves", "guardian", "guard", "gravewalker", "greybeard", "glyph", "glyphsmith", "glypthforge",
-	"glade", "guardianship", "gallant", "gatekeeper", "gemstone", "grimoire", "goblinoid", "glacial", "ghostfire", "glypthweaver", "geomancy", "geomancer",
-	"gloomcloak", "hexal", "hexalmancer", "hexalsmith", "hexology", "honor", "honorguard", "holy", "hunter", "herald", "hexcaster", "helm", "halcyon", "harmony",
-	"harmancy", "harmancer", "harology", "hinterlands", "hellfire", "hallow", "hydromancer", "hydromancy", "hollow", "hypnogem", "hypnomancer", "hypnomancy",
-	"hemlock", "hallowsteel", "hexfire", "heavenstone", "horn", "hym", "hymweaver", "havenmist", "hieromagus", "helianth", "hexblade", "hydralith", "horologist",
-	"horology", "huntress", "heartwood", "haruspex", "helixstaff", "imbue", "imperium", "icemage", "ivory", "inquisitor", "illusion", "invocation", "invoker",
-	"infernal", "infernum", "infernal", "ironclad", "ichor", "incorporeal", "illume", "incarnate", "inlay", "illusory", "ireful", "ivy", "ironwood", "inferno",
-	"jewels", "journeyman", "jester", "joker", "jestercraft", "javelin", "jewelcraft", "judgeblade", "journeycraft", "kingdom", "king", "knight", "knightess",
-	"knighthood", "kinslayer", "kin", "kindred", "knavish", "kismet", "keybearer", "keystone", "kilnfire", "kylix", "kalonia", "kalonian", "karnelian", "kithara",
-	"keyblade", "lair", "lantern", "legend", "lancer", "lord", "lore", "lancer", "lumen", "labryinth", "lunamancy", "lunamancer", "lunasmith", "lunalogy", "luminara",
-	"lurk", "lithomancy", "lithomancer", "lithosmith", "leyline", "levitate", "luminary", "lyre", "lorestone", "lunarium", "lambent", "lithoscribe", "mage",
-	"magician", "magicsmith", "majesty", "majestic", "maleficent", "medieval", "ministry", "malignant", "morph", "monarch", "mystic", "mythic", "meditate", "marauder",
-	"malachite", "monolith", "meadow", "moonrise", "mummy", "mummified", "mirage", "medallion", "moonshadow", "moonlit", "mysticism", "maelstrom", "mandala", "molten",
-	"mythos", "monument", "necrosmith", "necromancer", "necromancy", "necralsmith", "necralmancy", "necralmancer", "necrology", "necralology", "nightblade", "noble",
-	"necropolis", "nomad", "nightshade", "netherworld", "nethermage", "nethermancer", "nethermancy", "nautical", "nocture", "nightmage", "nightwalker", "novice",
-	"nyctophilia", "nex", "nexomancy", "nexomancer", "nexology", "nexer", "oracle", "occult", "ordinator", "ordain", "oracular", "overlord", "obsidian", "omen",
-	"oath", "otherworld", "overture", "omnipresent", "oasis", "onyx", "outlandish", "orb", "outpost", "overcast", "opalize", "ornate", "obelisk", "orison", "pantheon",
-	"paladin", "paragon", "pauldron", "phantasmal", "potion", "portal", "plain", "prophecy", "provence", "perilous", "pinnacle", "prism", "pyre", "pariah", "parchment",
-	"panacea", "pangea", "penumbral", "penumbramancy", "penumbramancer", "queen", "quest", "quiver", "quagmire", "quicksilver", "quicksand", "quell", "quaint",
-	"questor", "quill", "quivera", "quellion", "ring", "realm", "rogue", "runes", "runesmith", "runeblade", "runescribe", "relic", "ritual", "ruin", "reaven",
-	"revenant", "runic", "rift", "riftwalker", "regal", "runebearer", "ranger", "rustic", "reliquary", "revenant", "rapture", "realmwalker", "rhapsody", "raindancer", "resonant",
-	"saint", "scout", "seer", "seersword", "shard", "shadow", "shadowsmith", "shaman", "shield", "shire", "skull", "sin", "scribe", "scroll", "scrollsmith", "shard smith", "sorceress",
-	"sorcery", "spell", "spellsword", "spellbook", "staff", "squire", "skirmisher", "sword", "swordmaiden", "swordsman", "sultan", "shah", "smite",
-	"tale", "throne", "totem", "totemsmith", "tome", "tomesmith", "thaumaturgy", "tsar", "twilight", "talisman", "tyrant", "tenebria", "talon", "thaumaturge",
-	"thundermage", "thundermancy", "thundermancer", "trinket", "transpet", "theocratic", "talismanic", "tornblade", "tranquil", "thaumic", "thaumicacy", "thaumicology",
-	"tenebrae", "theurgy", "tincture", "tincturesmith", "unholy", "uprising", "unleash", "undying", "umbral", "umbralmacy", "umbralmancer", "umbralolgy", "ultraessence",
-	"utterance", "unabridged", "unyielding", "unruly", "unorthodox", "valor", "valorguard", "valley", "vanguard", "vortex", "veil", "veilwalker", "vagrant", "vitality",
-	"voyage", "valiant", "vagabond", "vanquish", "vellichor", "vivarium", "verdigris", "vision", "visonary", "vial", "vestige", "vesper", "vermiform", "voyant", "vellum",
-	"velocimancer", "velocimancy", "vestment", "veridical", "vehemence", "vex", "vexsmith", "wand", "weird", "wicked", "wild", "wings", "wisdom", "witchcraft", "wizard",
-	"wizardry", "warden", "watchman", "wanderer", "wildheart", "weald", "whirlwind", "witchery", "wayfarer", "wyrd", "warmage", "webweaver", "witching", "wanderlust",
-	"warcry", "weave", "windcaller", "warbeast", "weight", "waystone", "xyloid", "xerophyte", "xeromancy", "xeormancer", "xanthism", "xanthist", "xanthilogy",
-	"xanthimancer", "xyris", "xylera", "xylanth", "yggdrasil", "yore", "yarn", "yarnwraith", "yggorm", "yewstaff", "yorekeeper", "yorescroll", "yoreologist",
-	"yulefire", "yester", "yelldrin", "yarnfrost", "yarnfire", "yestertide", "yonderrealm", "yestermist", "zealot", "zodiac", "zenith", "ziggurat", "zepher",
-	"zephyrian", "zircon", "zephyranth", "zeal",
+//go:embed fantasy.txt
+var fantasytxt string
+
+//go:embed scifi.txt
+var scifitxt string
+
+//go:embed mystery.txt
+var mysterytxt string
+
+var fantasywords WordGroup
+var scifiwords WordGroup
+var mysterywords WordGroup
+
+type WordList int
+
+const (
+	Fantasy WordList = iota
+	Scifi
+	Mystery
+)
+
+var wordGroupByType = map[string]*WordGroup{
+	"fantasy": nil,
+	"scifi":   nil,
+	"mystery": nil,
 }
 
 var colors = []string{
@@ -93,23 +69,39 @@ func (w Words) getWordsString() (wordString string) {
 	return strings.Join(words, ",")
 }
 
-var colorIdx = 0
+type WordGroup struct {
+	words    []string
+	index    int
+	wordType WordList
+}
 
-func getRandomWords(n int) Words {
-	shuffled := make([]string, len(fantasywords))
-	copy(shuffled, fantasywords)
-	rand.Shuffle(len(shuffled), func(i, j int) {
-		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+func (w *WordGroup) shuffleWords() {
+	rand.Shuffle(len(w.words), func(i, j int) {
+		w.words[i], w.words[j] = w.words[j], w.words[i]
 	})
+}
 
+func (w *WordGroup) getRandomWords(n int) Words {
 	words := make([]Word, 0, n)
+	if w.index+n >= len(w.words) {
+		w.index = 0
+		w.shuffleWords()
+	}
+
 	for i := 0; i < n; i += 1 {
-		words = append(words, Word{Word: shuffled[i], Color: colors[colorIdx]})
+		words = append(words, Word{Word: w.words[w.index+i], Color: colors[colorIdx]})
 		colorIdx = (colorIdx + 1) % len(colors)
 	}
+	w.index += n
 
 	return Words{Words: words}
 }
+
+func (w *WordGroup) simpleString() string {
+	return fmt.Sprintf("type: %v, index: %d", w.wordType, w.index)
+}
+
+var colorIdx = 0
 
 func getSavedWords(savedWords string) Words {
 	splitwords := strings.Split(savedWords, ",")
@@ -130,15 +122,30 @@ type Colors struct {
 	Colors []string `json:"Colors"`
 }
 
+func typeHandler(r *http.Request) *WordGroup {
+	wordsType := r.URL.Query().Get("type")
+
+	wordGroup := wordGroupByType[wordsType]
+
+	if wordGroup == nil {
+		wordGroup = wordGroupByType["fantasy"]
+	}
+
+	return wordGroup
+}
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	savedWords := r.URL.Query().Get("words")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var words Words
+
+	wordGroup := typeHandler(r)
+
 	if savedWords != "" {
 		words = getSavedWords(savedWords)
 
 	} else {
-		words = getRandomWords(2 + rand.Intn(2))
+		words = wordGroup.getRandomWords(2 + rand.Intn(2))
 	}
 
 	component := Index(words)
@@ -154,7 +161,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func wordsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	words := getRandomWords(2 + rand.Intn(2))
+	wordGroup := typeHandler(r)
+
+	words := wordGroup.getRandomWords(2 + rand.Intn(2))
 	w.Header().Set("words", words.getWordsString())
 
 	component := WordsDiv(words)
@@ -190,9 +199,11 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	wordGroup := typeHandler(r)
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	words := getRandomWords(1)
+	words := wordGroup.getRandomWords(1)
 	if savedWordsSplit[0] == "" {
 		savedWordsSplit = []string{"", "", ""}
 	}
@@ -210,6 +221,19 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	re := regexp.MustCompile((`,\r?\n`))
+	fantasywords = WordGroup{words: re.Split(fantasytxt, -1)}
+	scifiwords = WordGroup{words: re.Split(scifitxt, -1)}
+	mysterywords = WordGroup{words: re.Split(mysterytxt, -1)}
+
+	fantasywords.shuffleWords()
+	scifiwords.shuffleWords()
+	mysterywords.shuffleWords()
+
+	wordGroupByType["fantasy"] = &fantasywords
+	wordGroupByType["scifi"] = &scifiwords
+	wordGroupByType["mystery"] = &mysterywords
+
 	http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/words/", wordsHandler)
