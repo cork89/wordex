@@ -215,8 +215,8 @@ func main() {
 	http.HandleFunc("/words/", wordsHandler)
 	http.HandleFunc("/word/{word}/", wordHandler)
 
-	log.Println("Starting server at http://localhost:8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	log.Println("Starting server at http://localhost:8001")
+	if err := http.ListenAndServe(":8001", nil); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
