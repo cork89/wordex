@@ -47,7 +47,7 @@ func Index(words Words) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/x-icon\" href=\"/static/wordex.ico\"><style>\n    html,\n    body {\n      height: 100%;\n      margin: 0;\n      font-family: Arial, sans-serif;\n      display: flex;\n      flex-direction: column;\n      justify-content: center;\n      align-items: center;\n      background-color: #f0f0f0;\n      min-height: 100vh;\n      padding-bottom: 140px;\n      touch-action: manipulation;\n      box-sizing: border-box; \n    }\n    \n    .centered-text {\n      font-size: 5rem;\n      font-weight: bold;\n      text-align: center;\n      color: #333;\n      margin-bottom: 20px;\n    }\n\n    .word-container {\n      position: relative;\n      display: inline-block;\n      margin: 10px;\n      padding: 10px 20px;\n      border-bottom: 10px solid #757575;\n      border-right: 10px solid #333;\n      border-radius: 10px;\n      color: #333;\n      user-select: none;\n      transition: transform 0.2s ease;\n      white-space: nowrap;\n    }\n\n    .rewind-button {\n      position: absolute;\n      top: -5px;\n      right: 5px;\n      border: none;\n      cursor: pointer;\n      padding: 0;\n      background: transparent;\n    }\n\n    .rewind-button:hover {\n      background-color: #a1a1a1;\n    }\n\n        @media (max-width: 600px) {\n      .centered-text {\n        font-size: 3rem;\n      }\n\n      .rewind-button {\n        right: -9px;\n      }\n    }\n\n    .options {\n      position: fixed;\n      bottom: 10rem;\n      left: 50%;\n      transform: translateX(-50%);\n    }\n\n    button {\n      font-size: 1.5rem;\n      padding: 10px 20px;\n      cursor: pointer;\n      border: none;\n      border-radius: 5px;\n      background-color: #007bff;\n      color: white;\n      transition: background-color 0.3s ease;\n      margin-top: 10px;\n      margin-right: 20px;\n      margin-bottom: 20px;\n    }\n\n    @media (max-height: 800px) {\n      .options {\n        bottom: 5rem;\n      }\n    }\n\n    button:hover {\n      background-color: #0056b3;\n    }\n\n    select {\n      padding: 8px 24px;\n      font-size: 1.5rem;\n      border: 1px solid #ccc;\n      border-radius: 4px;\n      background-color: white;\n      color: #333;\n      appearance: none;\n      -webkit-appearance: none;\n      -moz-appearance: none;\n      background-image: url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D'10'%20height%3D'7'%20viewBox%3D'0%200%2010%207'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Cpath%20d%3D'M0%200l5%207%205-7z'%20fill%3D'%23666'%20/%3E%3C/svg%3E\");\n      background-repeat: no-repeat;\n      background-position: right 10px center;\n      background-size: 10px 7px;\n      cursor: pointer;\n      padding-left: 12px;\n    }\n\n    select:focus {\n      border-color: #007bff;\n      outline: none;\n      box-shadow: 0 0 3px #007bff;\n    }\n  </style></head><body><div class=\"centered-text\" id=\"words\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/x-icon\" href=\"/static/wordex.ico\"><link rel=\"stylesheet\" href=\"/static/index.css\"></head><body><div class=\"centered-text\" id=\"words\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -55,7 +55,7 @@ func Index(words Words) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><div class=\"options\"><button id=\"changeBtn\">Change Words</button> <select id=\"wordsType\"><option value=\"fantasy\">Fantasy</option> <option value=\"scifi\">Scifi</option> <option value=\"mystery\">Mystery</option></select></div><div id=\"history\"><div id=\"historyList\"></div></div></body><script>\n    function setQueryStringParameter(name, value) {\n        const params = new URLSearchParams(window.location.search);\n        params.set(name, value);\n        window.history.pushState({}, \"\", decodeURIComponent(`${window.location.pathname}?${params}`));\n    }\n\n    function setWordsType(event) {\n      setQueryStringParameter(\"type\", event.target.options[event.target.selectedIndex].value)\n    }\n\n    function handleWordsChange(newWordsHtml, words, ok) {\n      if (ok) {\n        document.getElementById('words').innerHTML = newWordsHtml;\n        if (words) {\n            setQueryStringParameter(\"words\", words)\n            document.title = `Wordex | ${words}`\n        }\n\n      } else {\n        document.getElementById('words').textContent = 'Error loading words';\n        console.error('Fetch error:', error);\n\n      }\n    }\n\n    async function fetchWords() {\n        const params = new URLSearchParams(window.location.search)\n        const typeParam = params.get(\"type\")\n\n        const response = await fetch(`/words/${params.size > 0 ? \"?\"+params.toString() : \"\"}`);\n        const data = await response.text();\n        const words = response.headers.get(\"words\")\n        handleWordsChange(data, words, response.ok)\n    }\n\n    async function handleWordChange(word, index) {\n      try {\n        const params = new URLSearchParams(window.location.search)\n        const response = await fetch(`/word/${index}/${params.size > 0 ? \"?\"+params.toString() : \"\"}`);\n        if (!response.ok) throw new Error('Network response was not ok');\n        const data = await response.text();\n\n        document.getElementById(`word-${index}`).outerHTML = data;\n        const words = response.headers.get(\"words\")\n        if (words) {\n           setQueryStringParameter(\"words\", words)\n        }\n      } catch (error) {\n        document.getElementById(`word-${index}`).textContent = 'Error loading word';\n        console.error('Fetch error:', error);\n      }\n    }\n\n    document.getElementById(\"wordsType\").addEventListener(\"change\", setWordsType)\n    document.getElementById('changeBtn').addEventListener('click', fetchWords);\n\n\n    window.addEventListener(\"popstate\", (event) => {\n      window.location.href = window.location.href\n    })\n  </script></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><div class=\"options\"><button id=\"changeBtn\">Change Words</button> <select id=\"wordsType\"><option value=\"fantasy\">Fantasy</option> <option value=\"scifi\">Scifi</option> <option value=\"mystery\">Mystery</option> <option value=\"fantasynames\">Names</option></select></div><div id=\"history\"><div id=\"historyList\"></div></div></body><script>\n    function setQueryStringParameter(name, value) {\n        const params = new URLSearchParams(window.location.search);\n        params.set(name, value);\n        window.history.pushState({}, \"\", decodeURIComponent(`${window.location.pathname}?${params}`));\n    }\n\n    function setWordsType(event) {\n      setQueryStringParameter(\"type\", event.target.options[event.target.selectedIndex].value)\n    }\n\n    function handleWordsChange(newWordsHtml, words, ok) {\n      if (ok) {\n        document.getElementById('words').innerHTML = newWordsHtml;\n        if (words) {\n            setQueryStringParameter(\"words\", words)\n            document.title = `Wordex | ${words}`\n        }\n\n      } else {\n        document.getElementById('words').textContent = 'Error loading words';\n        console.error('Fetch error:', error);\n\n      }\n    }\n\n    async function fetchWords() {\n        const params = new URLSearchParams(window.location.search)\n        const typeParam = params.get(\"type\")\n\n        const response = await fetch(`/words/${params.size > 0 ? \"?\"+params.toString() : \"\"}`);\n        const data = await response.text();\n        const words = response.headers.get(\"words\")\n        handleWordsChange(data, words, response.ok)\n    }\n\n    async function handleWordChange(word, index) {\n      try {\n        const params = new URLSearchParams(window.location.search)\n        const response = await fetch(`/word/${index}/${params.size > 0 ? \"?\"+params.toString() : \"\"}`);\n        if (!response.ok) throw new Error('Network response was not ok');\n        const data = await response.text();\n\n        document.getElementById(`word-${index}`).outerHTML = data;\n        const words = response.headers.get(\"words\")\n        if (words) {\n           setQueryStringParameter(\"words\", words)\n        }\n      } catch (error) {\n        document.getElementById(`word-${index}`).textContent = 'Error loading word';\n        console.error('Fetch error:', error);\n      }\n    }\n\n    document.getElementById(\"wordsType\").addEventListener(\"change\", setWordsType)\n    document.getElementById('changeBtn').addEventListener('click', fetchWords);\n\n\n    window.addEventListener(\"popstate\", (event) => {\n      window.location.href = window.location.href\n    })\n  </script></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -122,7 +122,7 @@ func WordDiv(word Word, index string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("word-%s", index))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 223, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 107, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -135,26 +135,39 @@ func WordDiv(word Word, index string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("background-color: %s;", word.Color))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 223, Col: 122}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 107, Col: 122}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><div style=\"display: flex; flex-direction: column;\"><span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(word.Word)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 224, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 109, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span> <span class=\"subtext\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var8 string
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(word.Subtext)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `index.templ`, Line: 110, Col: 39}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -162,16 +175,16 @@ func WordDiv(word Word, index string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<button class=\"rewind-button\" onclick=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<button class=\"rewind-button\" onclick=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var8 templ.ComponentScript = templ.JSFuncCall("handleWordChange", word.Word, index)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8.Call)
+		var templ_7745c5c3_Var9 templ.ComponentScript = templ.JSFuncCall("handleWordChange", word.Word, index)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9.Call)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" aria-label=\"Change word\"><img src=\"/static/rewind.svg\"></button></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" aria-label=\"Change word\"><img src=\"/static/rewind.svg\"></button></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

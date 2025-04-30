@@ -13,124 +13,7 @@ templ Index(words Words) {
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>Wordex | { words.getWordsString() }</title>
 			<link rel="icon" type="image/x-icon" href="/static/wordex.ico"/>
-			<style>
-    html,
-    body {
-      height: 100%;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background-color: #f0f0f0;
-      min-height: 100vh;
-      padding-bottom: 140px;
-      touch-action: manipulation;
-      box-sizing: border-box; 
-    }
-    
-    .centered-text {
-      font-size: 5rem;
-      font-weight: bold;
-      text-align: center;
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    .word-container {
-      position: relative;
-      display: inline-block;
-      margin: 10px;
-      padding: 10px 20px;
-      border-bottom: 10px solid #757575;
-      border-right: 10px solid #333;
-      border-radius: 10px;
-      color: #333;
-      user-select: none;
-      transition: transform 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .rewind-button {
-      position: absolute;
-      top: -5px;
-      right: 5px;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      background: transparent;
-    }
-
-    .rewind-button:hover {
-      background-color: #a1a1a1;
-    }
-
-        @media (max-width: 600px) {
-      .centered-text {
-        font-size: 3rem;
-      }
-
-      .rewind-button {
-        right: -9px;
-      }
-    }
-
-    .options {
-      position: fixed;
-      bottom: 10rem;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
-    button {
-      font-size: 1.5rem;
-      padding: 10px 20px;
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-      background-color: #007bff;
-      color: white;
-      transition: background-color 0.3s ease;
-      margin-top: 10px;
-      margin-right: 20px;
-      margin-bottom: 20px;
-    }
-
-    @media (max-height: 800px) {
-      .options {
-        bottom: 5rem;
-      }
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    select {
-      padding: 8px 24px;
-      font-size: 1.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: white;
-      color: #333;
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D'10'%20height%3D'7'%20viewBox%3D'0%200%2010%207'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Cpath%20d%3D'M0%200l5%207%205-7z'%20fill%3D'%23666'%20/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 10px 7px;
-      cursor: pointer;
-      padding-left: 12px;
-    }
-
-    select:focus {
-      border-color: #007bff;
-      outline: none;
-      box-shadow: 0 0 3px #007bff;
-    }
-  </style>
+			<link rel="stylesheet" href="/static/index.css"/>
 		</head>
 		<body>
 			<div class="centered-text" id="words">
@@ -142,6 +25,7 @@ templ Index(words Words) {
 					<option value="fantasy">Fantasy</option>
 					<option value="scifi">Scifi</option>
 					<option value="mystery">Mystery</option>
+					<option value="fantasynames">Names</option>
 				</select>
 			</div>
 			<div id="history">
@@ -221,7 +105,10 @@ templ WordsDiv(words Words) {
 
 templ WordDiv(word Word, index string) {
 	<div id={ fmt.Sprintf("word-%s", index) } class="word-container" style={ fmt.Sprintf("background-color: %s;", word.Color) }>
-		<span>{ word.Word }</span>
+		<div style="display: flex; flex-direction: column;">
+			<span>{ word.Word }</span>
+			<span class="subtext">{ word.Subtext }</span>
+		</div>
 		<button class="rewind-button" onclick={ templ.JSFuncCall("handleWordChange", word.Word, index) } aria-label="Change word">
 			<img src="/static/rewind.svg"/>
 		</button>

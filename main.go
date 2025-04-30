@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"html"
 	"log"
 	"math/rand"
 	"net/http"
@@ -16,6 +17,9 @@ import (
 //go:embed fantasy.txt
 var fantasytxt string
 
+//go:embed fantasynames.txt
+var fantasynamestxt string
+
 //go:embed scifi.txt
 var scifitxt string
 
@@ -25,6 +29,7 @@ var mysterytxt string
 var fantasywords WordGroup
 var scifiwords WordGroup
 var mysterywords WordGroup
+var fantasynames WordGroup
 
 type WordList int
 
@@ -51,9 +56,12 @@ var colors = []string{
 	"#D8BFD8", // Thistle
 }
 
+var colorsLen = len(colors)
+
 type Word struct {
-	Word  string `json:"word"`
-	Color string `json:"color"`
+	Word    string `json:"word"`
+	Color   string `json:"color"`
+	Subtext string `json:"subtext"`
 }
 
 type Words struct {
@@ -70,7 +78,7 @@ func (w Words) getWordsString() (wordString string) {
 }
 
 type WordGroup struct {
-	words    []string
+	words    []Word
 	index    int
 	wordType WordList
 }
@@ -79,6 +87,9 @@ func (w *WordGroup) shuffleWords() {
 	rand.Shuffle(len(w.words), func(i, j int) {
 		w.words[i], w.words[j] = w.words[j], w.words[i]
 	})
+	for i := range w.words {
+		w.words[i].Color = colors[i%colorsLen]
+	}
 }
 
 func (w *WordGroup) getRandomWords(n int) Words {
@@ -89,7 +100,8 @@ func (w *WordGroup) getRandomWords(n int) Words {
 	}
 
 	for i := 0; i < n; i += 1 {
-		words = append(words, Word{Word: w.words[w.index+i], Color: colors[colorIdx]})
+		words = append(words, w.words[w.index+i])
+		//Word{Word: w.words[w.index+i], Color: colors[colorIdx]})
 		colorIdx = (colorIdx + 1) % len(colors)
 	}
 	w.index += n
@@ -101,14 +113,19 @@ func (w *WordGroup) simpleString() string {
 	return fmt.Sprintf("type: %v, index: %d", w.wordType, w.index)
 }
 
-var colorIdx = 0
-
-func getSavedWords(savedWords string) Words {
+func (w *WordGroup) getSavedWords(savedWords string) Words {
 	splitwords := strings.Split(savedWords, ",")
 
 	words := make([]Word, 0, len(splitwords))
-	for i, word := range splitwords {
-		words = append(words, Word{Word: word, Color: colors[colorIdx]})
+	for i, v := range splitwords {
+		word := html.UnescapeString(v)
+		var subtext = ""
+		for _, group := range w.words {
+			if group.Word == word {
+				subtext = group.Subtext
+			}
+		}
+		words = append(words, Word{Word: word, Color: colors[colorIdx], Subtext: subtext})
 		colorIdx = (colorIdx + 1) % len(colors)
 		if i > 2 {
 			break
@@ -117,6 +134,8 @@ func getSavedWords(savedWords string) Words {
 
 	return Words{Words: words}
 }
+
+var colorIdx = 0
 
 type Colors struct {
 	Colors []string `json:"Colors"`
@@ -142,7 +161,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	wordGroup := typeHandler(r)
 
 	if savedWords != "" {
-		words = getSavedWords(savedWords)
+		words = wordGroup.getSavedWords(savedWords)
 
 	} else {
 		words = wordGroup.getRandomWords(2 + rand.Intn(2))
@@ -220,19 +239,37 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var re = regexp.MustCompile((`,\r?\n`))
+
+func createWordGroup(wordsraw [2]string) WordGroup {
+	var wordGroup WordGroup
+	words := re.Split(wordsraw[1], -1)
+	wordGroup.words = make([]Word, 0, len(words))
+	for i, v := range words {
+		wordparts := strings.Split(v, " : ")
+
+		word := Word{Word: wordparts[0], Color: colors[i%colorsLen]}
+		if len(wordparts) > 1 {
+			word.Subtext = wordparts[1]
+		}
+		wordGroup.words = append(wordGroup.words, word)
+	}
+	return wordGroup
+}
+
 func main() {
-	re := regexp.MustCompile((`,\r?\n`))
-	fantasywords = WordGroup{words: re.Split(fantasytxt, -1)}
-	scifiwords = WordGroup{words: re.Split(scifitxt, -1)}
-	mysterywords = WordGroup{words: re.Split(mysterytxt, -1)}
+	var initialWords = [][2]string{
+		{"fantasy", fantasytxt},
+		{"scifi", scifitxt},
+		{"mystery", mysterytxt},
+		{"fantasynames", fantasynamestxt},
+	}
 
-	fantasywords.shuffleWords()
-	scifiwords.shuffleWords()
-	mysterywords.shuffleWords()
-
-	wordGroupByType["fantasy"] = &fantasywords
-	wordGroupByType["scifi"] = &scifiwords
-	wordGroupByType["mystery"] = &mysterywords
+	for i := range initialWords {
+		tempWord := createWordGroup(initialWords[i])
+		tempWord.shuffleWords()
+		wordGroupByType[initialWords[i][0]] = &tempWord
+	}
 
 	http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", handler)
