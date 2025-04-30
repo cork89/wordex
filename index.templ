@@ -26,6 +26,8 @@ templ Index(words Words) {
       background-color: #f0f0f0;
       min-height: 100vh;
       padding-bottom: 140px;
+      touch-action: manipulation;
+      box-sizing: border-box; 
     }
     
     .centered-text {
@@ -41,7 +43,8 @@ templ Index(words Words) {
       display: inline-block;
       margin: 10px;
       padding: 10px 20px;
-      border: 3px solid #333;
+      border-bottom: 10px solid #757575;
+      border-right: 10px solid #333;
       border-radius: 10px;
       color: #333;
       user-select: none;
@@ -63,6 +66,16 @@ templ Index(words Words) {
       background-color: #a1a1a1;
     }
 
+        @media (max-width: 600px) {
+      .centered-text {
+        font-size: 3rem;
+      }
+
+      .rewind-button {
+        right: -9px;
+      }
+    }
+
     .options {
       position: fixed;
       bottom: 10rem;
@@ -81,13 +94,20 @@ templ Index(words Words) {
       transition: background-color 0.3s ease;
       margin-top: 10px;
       margin-right: 20px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-height: 800px) {
+      .options {
+        bottom: 5rem;
+      }
     }
 
     button:hover {
       background-color: #0056b3;
     }
 
-    .styled-select {
+    select {
       padding: 8px 24px;
       font-size: 1.5rem;
       border: 1px solid #ccc;
@@ -105,7 +125,7 @@ templ Index(words Words) {
       padding-left: 12px;
     }
 
-    .styled-select:focus {
+    select:focus {
       border-color: #007bff;
       outline: none;
       box-shadow: 0 0 3px #007bff;
@@ -118,7 +138,7 @@ templ Index(words Words) {
 			</div>
 			<div class="options">
 				<button id="changeBtn">Change Words</button>
-				<select id="wordsType" class="styled-select">
+				<select id="wordsType">
 					<option value="fantasy">Fantasy</option>
 					<option value="scifi">Scifi</option>
 					<option value="mystery">Mystery</option>
@@ -200,7 +220,7 @@ templ WordsDiv(words Words) {
 }
 
 templ WordDiv(word Word, index string) {
-	<div id={ fmt.Sprintf("word-%s", index) } class="word-container" style={ fmt.Sprintf("background-color: %s; border-color: black;", word.Color) }>
+	<div id={ fmt.Sprintf("word-%s", index) } class="word-container" style={ fmt.Sprintf("background-color: %s;", word.Color) }>
 		<span>{ word.Word }</span>
 		<button class="rewind-button" onclick={ templ.JSFuncCall("handleWordChange", word.Word, index) } aria-label="Change word">
 			<img src="/static/rewind.svg"/>
