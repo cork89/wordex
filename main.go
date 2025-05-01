@@ -26,23 +26,50 @@ var scifitxt string
 //go:embed mystery.txt
 var mysterytxt string
 
-var fantasywords WordGroup
-var scifiwords WordGroup
-var mysterywords WordGroup
-var fantasynames WordGroup
-
 type WordList int
 
 const (
 	Fantasy WordList = iota
 	Scifi
 	Mystery
+	Fantasynames
 )
 
+func (w WordList) String() string {
+	switch w {
+	case Fantasy:
+		return "fantasy"
+	case Scifi:
+		return "scifi"
+	case Mystery:
+		return "mystery"
+	case Fantasynames:
+		return "fantasynames"
+	default:
+		return "Unknown"
+	}
+}
+
+func ParseWordList(s string) (WordList, error) {
+	switch strings.ToLower(s) {
+	case "fantasy":
+		return Fantasy, nil
+	case "scifi":
+		return Scifi, nil
+	case "mystery":
+		return Mystery, nil
+	case "fantasynames":
+		return Fantasynames, nil
+	default:
+		return Fantasy, errors.New("invalid word list: " + s)
+	}
+}
+
 var wordGroupByType = map[string]*WordGroup{
-	"fantasy": nil,
-	"scifi":   nil,
-	"mystery": nil,
+	"fantasy":      nil,
+	"scifi":        nil,
+	"mystery":      nil,
+	"fantasynames": nil,
 }
 
 var colors = []string{
@@ -141,16 +168,25 @@ type Colors struct {
 	Colors []string `json:"Colors"`
 }
 
-func typeHandler(r *http.Request) *WordGroup {
+// func typeHandler(r *http.Request) *WordGroup {
+// 	wordsType := r.URL.Query().Get("type")
+
+// 	wordGroup := wordGroupByType[wordsType]
+
+// 	if wordGroup == nil {
+// 		wordGroup = wordGroupByType["fantasy"]
+// 	}
+
+// 	return wordGroup
+// }
+
+func typeHandler(r *http.Request) (WordList, error) {
 	wordsType := r.URL.Query().Get("type")
 
-	wordGroup := wordGroupByType[wordsType]
-
-	if wordGroup == nil {
-		wordGroup = wordGroupByType["fantasy"]
+	if wordsType == "" {
+		return Fantasy, nil
 	}
-
-	return wordGroup
+	return ParseWordList(wordsType)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -158,18 +194,26 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var words Words
 
-	wordGroup := typeHandler(r)
+	wordCategory, err := typeHandler(r)
+
+	if err != nil {
+		log.Println("defaulting to fantasy")
+	}
 
 	if savedWords != "" {
-		words = wordGroup.getSavedWords(savedWords)
-
+		words, err = getSavedWords(savedWords, wordCategory)
 	} else {
-		words = wordGroup.getRandomWords(2 + rand.Intn(2))
+		words, err = getRandomWords(2+rand.Intn(2), wordCategory)
+	}
+
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
 
 	component := Index(words)
 
-	err := component.Render(context.Background(), w)
+	err = component.Render(context.Background(), w)
 
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -180,14 +224,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func wordsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	wordGroup := typeHandler(r)
+	wordCategory, err := typeHandler(r)
 
-	words := wordGroup.getRandomWords(2 + rand.Intn(2))
+	if err != nil {
+		log.Println("defaulting to fantasy")
+	}
+
+	words, err := getRandomWords(2+rand.Intn(2), wordCategory)
+
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("words", words.getWordsString())
 
 	component := WordsDiv(words)
 
-	err := component.Render(context.Background(), w)
+	err = component.Render(context.Background(), w)
 
 	if err != nil {
 		http.Error(w, "Failed to render words", http.StatusInternalServerError)
@@ -218,11 +272,20 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordGroup := typeHandler(r)
+	wordCategory, err := typeHandler(r)
 
+	if err != nil {
+		log.Println("defaulting to fantasy")
+	}
+
+	words, err := getRandomWords(1, wordCategory)
+
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	words := wordGroup.getRandomWords(1)
 	if savedWordsSplit[0] == "" {
 		savedWordsSplit = []string{"", "", ""}
 	}
@@ -258,6 +321,12 @@ func createWordGroup(wordsraw [2]string) WordGroup {
 }
 
 func main() {
+	err := initDataaccess()
+
+	if err != nil {
+		log.Panicf("failed to init dataaccess, err: %v\n", err)
+	}
+
 	var initialWords = [][2]string{
 		{"fantasy", fantasytxt},
 		{"scifi", scifitxt},
