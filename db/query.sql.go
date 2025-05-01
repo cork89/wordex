@@ -76,19 +76,66 @@ func (q *Queries) GetRandomWords(ctx context.Context, arg GetRandomWordsParams) 
 	return items, nil
 }
 
-const getSavedWords = `-- name: GetSavedWords :many
+const getThreeSavedWords = `-- name: GetThreeSavedWords :many
 SELECT id, word, category, subtext FROM words
-WHERE word in (?) and category = ?
+WHERE word in (?,?,?) and category = ?
 LIMIT 3
 `
 
-type GetSavedWordsParams struct {
+type GetThreeSavedWordsParams struct {
 	Word     string
+	Word_2   string
+	Word_3   string
 	Category string
 }
 
-func (q *Queries) GetSavedWords(ctx context.Context, arg GetSavedWordsParams) ([]Word, error) {
-	rows, err := q.db.QueryContext(ctx, getSavedWords, arg.Word, arg.Category)
+func (q *Queries) GetThreeSavedWords(ctx context.Context, arg GetThreeSavedWordsParams) ([]Word, error) {
+	rows, err := q.db.QueryContext(ctx, getThreeSavedWords,
+		arg.Word,
+		arg.Word_2,
+		arg.Word_3,
+		arg.Category,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Word
+	for rows.Next() {
+		var i Word
+		if err := rows.Scan(
+			&i.ID,
+			&i.Word,
+			&i.Category,
+			&i.Subtext,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTwoSavedWords = `-- name: GetTwoSavedWords :many
+SELECT id, word, category, subtext FROM words
+WHERE word in (?,?) and category = ?
+LIMIT 2
+`
+
+type GetTwoSavedWordsParams struct {
+	Word     string
+	Word_2   string
+	Category string
+}
+
+func (q *Queries) GetTwoSavedWords(ctx context.Context, arg GetTwoSavedWordsParams) ([]Word, error) {
+	rows, err := q.db.QueryContext(ctx, getTwoSavedWords, arg.Word, arg.Word_2, arg.Category)
 	if err != nil {
 		return nil, err
 	}

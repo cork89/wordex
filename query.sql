@@ -4,9 +4,14 @@ WHERE category = ?
 ORDER BY RANDOM()
 LIMIT ?;
 
--- name: GetSavedWords :many
+-- name: GetTwoSavedWords :many
 SELECT * FROM words
-WHERE word in (?) and category = ?
+WHERE word in (?,?) and category = ?
+LIMIT 2;
+
+-- name: GetThreeSavedWords :many
+SELECT * FROM words
+WHERE word in (?,?,?) and category = ?
 LIMIT 3;
 
 -- name: CreateWord :one

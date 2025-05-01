@@ -2,29 +2,15 @@ package main
 
 import (
 	"context"
-	_ "embed"
 	"errors"
-	"fmt"
-	"html"
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 )
-
-//go:embed fantasy.txt
-var fantasytxt string
-
-//go:embed fantasynames.txt
-var fantasynamestxt string
-
-//go:embed scifi.txt
-var scifitxt string
-
-//go:embed mystery.txt
-var mysterytxt string
 
 type WordList int
 
@@ -65,13 +51,6 @@ func ParseWordList(s string) (WordList, error) {
 	}
 }
 
-var wordGroupByType = map[string]*WordGroup{
-	"fantasy":      nil,
-	"scifi":        nil,
-	"mystery":      nil,
-	"fantasynames": nil,
-}
-
 var colors = []string{
 	"#FFB6C1", // LightPink
 	"#ADD8E6", // LightBlue
@@ -101,104 +80,28 @@ func (w Words) getWordsString() (wordString string) {
 		words = append(words, word.Word)
 	}
 
-	return strings.Join(words, ",")
+	return url.QueryEscape(strings.Join(words, ","))
 }
 
-type WordGroup struct {
-	words    []Word
-	index    int
-	wordType WordList
-}
-
-func (w *WordGroup) shuffleWords() {
-	rand.Shuffle(len(w.words), func(i, j int) {
-		w.words[i], w.words[j] = w.words[j], w.words[i]
-	})
-	for i := range w.words {
-		w.words[i].Color = colors[i%colorsLen]
-	}
-}
-
-func (w *WordGroup) getRandomWords(n int) Words {
-	words := make([]Word, 0, n)
-	if w.index+n >= len(w.words) {
-		w.index = 0
-		w.shuffleWords()
-	}
-
-	for i := 0; i < n; i += 1 {
-		words = append(words, w.words[w.index+i])
-		//Word{Word: w.words[w.index+i], Color: colors[colorIdx]})
-		colorIdx = (colorIdx + 1) % len(colors)
-	}
-	w.index += n
-
-	return Words{Words: words}
-}
-
-func (w *WordGroup) simpleString() string {
-	return fmt.Sprintf("type: %v, index: %d", w.wordType, w.index)
-}
-
-func (w *WordGroup) getSavedWords(savedWords string) Words {
-	splitwords := strings.Split(savedWords, ",")
-
-	words := make([]Word, 0, len(splitwords))
-	for i, v := range splitwords {
-		word := html.UnescapeString(v)
-		var subtext = ""
-		for _, group := range w.words {
-			if group.Word == word {
-				subtext = group.Subtext
-			}
-		}
-		words = append(words, Word{Word: word, Color: colors[colorIdx], Subtext: subtext})
-		colorIdx = (colorIdx + 1) % len(colors)
-		if i > 2 {
-			break
-		}
-	}
-
-	return Words{Words: words}
-}
-
-var colorIdx = 0
-
-type Colors struct {
-	Colors []string `json:"Colors"`
-}
-
-// func typeHandler(r *http.Request) *WordGroup {
-// 	wordsType := r.URL.Query().Get("type")
-
-// 	wordGroup := wordGroupByType[wordsType]
-
-// 	if wordGroup == nil {
-// 		wordGroup = wordGroupByType["fantasy"]
-// 	}
-
-// 	return wordGroup
-// }
-
-func typeHandler(r *http.Request) (WordList, error) {
+func typeHandler(r *http.Request) WordList {
 	wordsType := r.URL.Query().Get("type")
 
-	if wordsType == "" {
-		return Fantasy, nil
+	wordList, err := ParseWordList(wordsType)
+
+	if err != nil {
+		log.Println("defaulting to fantasy")
 	}
-	return ParseWordList(wordsType)
+
+	return wordList
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	savedWords := r.URL.Query().Get("words")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	var words Words
+	var err error
 
-	wordCategory, err := typeHandler(r)
-
-	if err != nil {
-		log.Println("defaulting to fantasy")
-	}
+	wordCategory := typeHandler(r)
 
 	if savedWords != "" {
 		words, err = getSavedWords(savedWords, wordCategory)
@@ -224,11 +127,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func wordsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	wordCategory, err := typeHandler(r)
-
-	if err != nil {
-		log.Println("defaulting to fantasy")
-	}
+	wordCategory := typeHandler(r)
 
 	words, err := getRandomWords(2+rand.Intn(2), wordCategory)
 
@@ -236,7 +135,6 @@ func wordsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("words", words.getWordsString())
 
 	component := WordsDiv(words)
@@ -272,11 +170,7 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wordCategory, err := typeHandler(r)
-
-	if err != nil {
-		log.Println("defaulting to fantasy")
-	}
+	wordCategory := typeHandler(r)
 
 	words, err := getRandomWords(1, wordCategory)
 
@@ -291,7 +185,17 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	savedWordsSplit[idx] = words.Words[0].Word
 
-	w.Header().Set("words", strings.Join(savedWordsSplit, ","))
+	var newWords Words
+	newWords.Words = make([]Word, 0, len(savedWordsSplit))
+	for i := range savedWordsSplit {
+		if i == idx {
+			newWords.Words = append(newWords.Words, words.Words[0])
+		} else {
+			newWords.Words = append(newWords.Words, Word{Word: savedWordsSplit[i]})
+		}
+	}
+
+	w.Header().Set("words", newWords.getWordsString())
 
 	component := WordDiv(words.Words[0], wordIdx)
 
@@ -302,42 +206,11 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var re = regexp.MustCompile((`,\r?\n`))
-
-func createWordGroup(wordsraw [2]string) WordGroup {
-	var wordGroup WordGroup
-	words := re.Split(wordsraw[1], -1)
-	wordGroup.words = make([]Word, 0, len(words))
-	for i, v := range words {
-		wordparts := strings.Split(v, " : ")
-
-		word := Word{Word: wordparts[0], Color: colors[i%colorsLen]}
-		if len(wordparts) > 1 {
-			word.Subtext = wordparts[1]
-		}
-		wordGroup.words = append(wordGroup.words, word)
-	}
-	return wordGroup
-}
-
 func main() {
 	err := initDataaccess()
 
 	if err != nil {
 		log.Panicf("failed to init dataaccess, err: %v\n", err)
-	}
-
-	var initialWords = [][2]string{
-		{"fantasy", fantasytxt},
-		{"scifi", scifitxt},
-		{"mystery", mysterytxt},
-		{"fantasynames", fantasynamestxt},
-	}
-
-	for i := range initialWords {
-		tempWord := createWordGroup(initialWords[i])
-		tempWord.shuffleWords()
-		wordGroupByType[initialWords[i][0]] = &tempWord
 	}
 
 	http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strings"
 
 	dataaccess "com.github.cork89/goodmorning/db"
 	_ "github.com/mattn/go-sqlite3"
@@ -37,9 +38,9 @@ func initDataaccess() error {
 	return nil
 }
 
-func insertWords(wordGroup WordGroup, category WordList) error {
+func insertWords(words Words, category WordList) error {
 	var err error
-	for _, v := range wordGroup.words {
+	for _, v := range words.Words {
 		_, err = queries.CreateWord(context.Background(), dataaccess.CreateWordParams{Word: v.Word, Category: category.String(), Subtext: v.Subtext})
 
 		if err != nil {
@@ -64,23 +65,51 @@ func getRandomWords(count int, category WordList) (Words, error) {
 	}
 
 	words := make([]Word, 0, len(dbwords))
-	for _, v := range dbwords {
-		words = append(words, Word{Word: v.Word, Subtext: v.Subtext, Color: colors[rand.Intn(colorsLen)]})
+	colorsIdx := rand.Intn(colorsLen)
+	for i, v := range dbwords {
+		words = append(words, Word{Word: v.Word, Subtext: v.Subtext, Color: colors[(colorsIdx+i)%colorsLen]})
 	}
 	return Words{words}, nil
 }
 
-func getSavedWords(savedWords string, category WordList) (Words, error) {
-	dbwords, err := queries.GetSavedWords(context.Background(), dataaccess.GetSavedWordsParams{Word: savedWords, Category: category.String()})
+func wordExists(words []Word, savedWord string) bool {
+	for _, v := range words {
+		if v.Word == savedWord {
+			return true
+		}
+	}
+	return false
+}
+
+func getSavedWords(savedWordsStr string, category WordList) (Words, error) {
+	var dbwords []dataaccess.Word
+	var err error
+	savedWords := strings.Split(savedWordsStr, ",")
+
+	if len(savedWords) == 2 {
+		dbwords, err = queries.GetTwoSavedWords(context.Background(), dataaccess.GetTwoSavedWordsParams{Word: savedWords[0], Word_2: savedWords[1], Category: category.String()})
+	} else if len(savedWords) == 3 {
+		dbwords, err = queries.GetThreeSavedWords(context.Background(), dataaccess.GetThreeSavedWordsParams{Word: savedWords[0], Word_2: savedWords[1], Word_3: savedWords[2], Category: category.String()})
+	} else {
+		return Words{}, errors.New("invalid number of saved words")
+	}
 
 	if err != nil {
-		fmt.Println("failed to retrieve saved words")
+		fmt.Println("failed to retrieve saved words, err:", err)
 		return Words{}, err
 	}
 
 	words := make([]Word, 0, len(dbwords))
-	for _, v := range dbwords {
-		words = append(words, Word{Word: v.Word, Subtext: v.Subtext, Color: colors[rand.Intn(colorsLen)]})
+	colorsIdx := rand.Intn(colorsLen)
+	for i, v := range dbwords {
+		words = append(words, Word{Word: v.Word, Subtext: v.Subtext, Color: colors[(colorsIdx+i)%colorsLen]})
+	}
+	if len(dbwords) != len(savedWords) {
+		for _, v := range savedWords {
+			if !wordExists(words, v) {
+				words = append(words, Word{Word: v, Color: colors[rand.Intn(colorsLen)]})
+			}
+		}
 	}
 	return Words{words}, nil
 }
