@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"math/rand"
@@ -65,6 +66,7 @@ var colors = []string{
 var colorsLen = len(colors)
 
 type Word struct {
+	Id      int    `json:"id"`
 	Word    string `json:"word"`
 	Color   string `json:"color"`
 	Subtext string `json:"subtext"`
@@ -125,7 +127,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func wordsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	wordCategory := typeHandler(r)
 
@@ -135,6 +136,23 @@ func wordsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	if r.Header.Get("Content-Type") == "application/json" {
+		for i := range words.Words {
+			words.Words[i].Id = i
+		}
+		json, err := json.Marshal(words)
+
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Write(json)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("words", words.getWordsString())
 
 	component := WordsDiv(words)
@@ -178,6 +196,19 @@ func wordHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	if r.Header.Get("Content-Type") == "application/json" {
+		json, err := json.Marshal(words.Words[0])
+
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Write(json)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	if savedWordsSplit[0] == "" {
