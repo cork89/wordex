@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-templ Index(words Words) {
+templ Index(words Words, wordList WordList) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -14,8 +14,19 @@ templ Index(words Words) {
 			<title>Wordex | { words.getWordsString() }</title>
 			<link rel="icon" type="image/x-icon" href="/static/wordex.ico"/>
 			<link rel="stylesheet" href="/static/index.css"/>
+			<script>
+      function handleImageError(image) {
+      console.log(image)
+      image.src = `/static/wordex.png`
+      image.alt = "wordex"
+    }</script>
 		</head>
 		<body>
+			if wordList == Fantasypics {
+				<img id="words-image" src={ fmt.Sprintf("https://images.hearteyesemoji.dev/%s.webp", words.getWordsHypenated()) } alt={ words.getWordsString() } onerror="handleImageError(this)"/>
+			} else {
+				<img id="words-image" src="/static/wordex.png" alt="wordex"/>
+			}
 			<div class="centered-text" id="words">
 				@WordsDiv(words)
 			</div>
@@ -26,6 +37,7 @@ templ Index(words Words) {
 					<option value="scifi">Scifi</option>
 					<option value="mystery">Mystery</option>
 					<option value="fantasynames">Names</option>
+					<option value="fantasypics">Fantasy Pics</option>
 				</select>
 			</div>
 			<div id="history">
@@ -47,8 +59,20 @@ templ Index(words Words) {
       if (ok) {
         document.getElementById('words').innerHTML = newWordsHtml;
         if (words) {
+            const params = new URLSearchParams(window.location.search);
             setQueryStringParameter("words", words)
             document.title = `Wordex | ${words}`
+            
+            const wordsImage = document.getElementById("words-image")
+
+            if (params.get("type") == "fantasypics") {
+              const hypenated = words.split("%2C").sort().join("-")
+              wordsImage.src = `https://images.hearteyesemoji.dev/${hypenated}.webp`
+              wordsImage.alt = hypenated
+            } else if (wordsImage.src != "/static/wordex.png") {
+              wordsImage.src = `/static/wordex.png`
+              wordsImage.alt = "wordex"
+            }
         }
 
       } else {
@@ -86,9 +110,17 @@ templ Index(words Words) {
       }
     }
 
+    function init() {
+        const params = new URLSearchParams(window.location.search)
+        const typeParam = params.get("type")
+        if (typeParam) {
+          document.getElementById("wordsType").value = typeParam 
+        }
+    }
+
     document.getElementById("wordsType").addEventListener("change", setWordsType)
     document.getElementById('changeBtn').addEventListener('click', fetchWords);
-
+    init()
 
     window.addEventListener("popstate", (event) => {
       window.location.href = window.location.href

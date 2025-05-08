@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -20,6 +22,7 @@ const (
 	Scifi
 	Mystery
 	Fantasynames
+	Fantasypics
 )
 
 func (w WordList) String() string {
@@ -32,6 +35,8 @@ func (w WordList) String() string {
 		return "mystery"
 	case Fantasynames:
 		return "fantasynames"
+	case Fantasypics:
+		return "fantasypics"
 	default:
 		return "Unknown"
 	}
@@ -47,10 +52,16 @@ func ParseWordList(s string) (WordList, error) {
 		return Mystery, nil
 	case "fantasynames":
 		return Fantasynames, nil
+	case "fantasypics":
+		return Fantasypics, nil
 	default:
 		return Fantasy, errors.New("invalid word list: " + s)
 	}
 }
+
+//go:embed images.txt
+var imagestxt string
+var images []string
 
 var colors = []string{
 	"#FFB6C1", // LightPink
@@ -85,6 +96,17 @@ func (w Words) getWordsString() (wordString string) {
 	return url.QueryEscape(strings.Join(words, ","))
 }
 
+func (w Words) getWordsHypenated() (wordString string) {
+	words := make([]string, 0, len(w.Words))
+	for _, word := range w.Words {
+		words = append(words, word.Word)
+	}
+
+	sort.Strings(words)
+
+	return strings.Join(words, "-")
+}
+
 func typeHandler(r *http.Request) WordList {
 	wordsType := r.URL.Query().Get("type")
 
@@ -116,7 +138,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	component := Index(words)
+	component := Index(words, wordCategory)
 
 	err = component.Render(context.Background(), w)
 
@@ -130,7 +152,16 @@ func wordsHandler(w http.ResponseWriter, r *http.Request) {
 
 	wordCategory := typeHandler(r)
 
-	words, err := getRandomWords(2+rand.Intn(2), wordCategory)
+	var words Words
+	var err error
+
+	if wordCategory == Fantasypics {
+		savedWord := images[rand.Intn(len(images))]
+		savedWord = strings.ReplaceAll(savedWord, "-", ",")
+		words, err = getSavedWords(savedWord, wordCategory)
+	} else {
+		words, err = getRandomWords(2+rand.Intn(2), wordCategory)
+	}
 
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -243,8 +274,11 @@ func main() {
 	if err != nil {
 		log.Panicf("failed to init dataaccess, err: %v\n", err)
 	}
+	imagestxt = strings.ReplaceAll(imagestxt, "\r\n", "\n")
+	images = strings.Split(imagestxt, "\n")
 
 	http.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("GET /images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/words/", wordsHandler)
 	http.HandleFunc("/word/{word}/", wordHandler)

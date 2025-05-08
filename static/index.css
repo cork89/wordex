@@ -18,7 +18,7 @@ body {
     font-weight: bold;
     text-align: center;
     color: #333;
-    margin-bottom: 20px;
+    margin-bottom: 3em;
 }
 
 .word-container {
@@ -119,4 +119,29 @@ select:focus {
     border-color: #007bff;
     outline: none;
     box-shadow: 0 0 3px #007bff;
+}
+
+#words-image {
+    width: 300px;
+    height: 300px;
+    border-radius: 12px;
+    margin-bottom: 5em;
+    box-shadow: 12px 12px 2px 1px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 480px) {
+    #words-image {
+        margin-bottom: 1em;
+        margin-top: 1em;
+        width: 200px;
+        height: 200px;
+    }
+
+    .options {
+        bottom: 1rem;
+    }
+
+    .centered-text {
+        font-size: 2rem;
+    }
 }
